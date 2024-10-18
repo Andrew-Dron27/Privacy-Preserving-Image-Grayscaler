@@ -16,12 +16,21 @@
 #include <sys/wait.h>
 #include <signal.h>
 
+#include "../image/image.h"
+#include "../image/network.h"
+#include <iostream>
+
 #define PORT "3490"  // the port users will be connecting to
 
 #define BACKLOG 10   // how many pending connections queue will hold
 
+#define MAXDATASIZE 100
+
+#define BUFFERSIZE 1024
+
 void sigchld_handler(int s)
 {
+    s++;
     // waitpid() might overwrite errno, so we save and restore it:
     int saved_errno = errno;
 
@@ -105,7 +114,7 @@ int main(void)
         exit(1);
     }
 
-    printf("server: waiting for connections...\n");
+    std::cout << "Server waiting for connections: " << "\n";
 
     while(1) {  // main accept() loop
         sin_size = sizeof their_addr;
@@ -118,13 +127,18 @@ int main(void)
         inet_ntop(their_addr.ss_family,
             get_in_addr((struct sockaddr *)&their_addr),
             s, sizeof s);
-        printf("server: got connection from %s\n", s);
+        std::cout << "Server received connection from: " << s << "\n";
 
         if (!fork()) { // this is the child process
-            close(sockfd); // child doesn't need the listener
-            if (send(new_fd, "Hello, world!", 13, 0) == -1)
-                perror("send");
-            close(new_fd);
+
+            Image img;
+
+            if(recv_image(new_fd, img) == true){
+                img.grayscale_lum();
+                send_image(new_fd, img);
+            }
+
+            close(sockfd);
             exit(0);
         }
         close(new_fd);  // parent doesn't need this

@@ -1,0 +1,8 @@
+# Ignore object files and executable
+*.o
+*.exe
+
+# Ignore build directories
+bin/
+.vscode/
+obj/

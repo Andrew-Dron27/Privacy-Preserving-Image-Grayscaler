@@ -14,6 +14,11 @@
 #include <sys/socket.h>
 
 #include <arpa/inet.h>
+#include <fstream>
+#include <vector>
+
+#include "../image/image.h"
+#include "../image/network.h"
 
 #define PORT "3490" // the port client will be connecting to 
 
@@ -31,17 +36,20 @@ void *get_in_addr(struct sockaddr *sa)
 
 int main(int argc, char *argv[])
 {
-    int sockfd, numbytes;  
-    char buf[MAXDATASIZE];
+    int sockfd; 
+    //char buf[MAXDATASIZE];
     struct addrinfo hints, *servinfo, *p;
     int rv;
     char s[INET6_ADDRSTRLEN];
 
-    if (argc != 2) {
-        fprintf(stderr,"usage: client hostname\n");
+    if (argc != 4) {
+        fprintf(stderr,"Must supply hostname and filepath\n");
         exit(1);
     }
 
+    char* file_read_path = argv[2];
+    char* file_write_path = argv[3];
+    
     memset(&hints, 0, sizeof hints);
     hints.ai_family = AF_UNSPEC;
     hints.ai_socktype = SOCK_STREAM;
@@ -79,14 +87,14 @@ int main(int argc, char *argv[])
 
     freeaddrinfo(servinfo); // all done with this structure
 
-    if ((numbytes = recv(sockfd, buf, MAXDATASIZE-1, 0)) == -1) {
-        perror("recv");
-        exit(1);
+    Image image = Image(file_read_path);
+    Image greyscale;
+
+    if(send_image(sockfd, image)){
+        if(recv_image(sockfd,greyscale)){
+            greyscale.write_image(file_write_path);
+        }
     }
-
-    buf[numbytes] = '\0';
-
-    printf("client: received '%s'\n",buf);
 
     close(sockfd);
 
