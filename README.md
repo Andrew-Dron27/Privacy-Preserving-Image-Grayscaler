@@ -1,3 +1,4 @@
 # Privacy-Preserving-Image-Grayscaler
-Client-Server application where a user can send a FHE encrypted .jpg image to the server and have
-a greyscale algorithm applied to the image while maintining secrecy of the image.
+Client-Server where the client applies an FHE algorithm to the image data before sending to the server.
+The server the performs a grayscaling algorithm on the image using the arithmetic properties of the FHE scheme,
+and returns the image to the client.
