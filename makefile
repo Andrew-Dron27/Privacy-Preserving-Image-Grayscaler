@@ -10,12 +10,13 @@ SERVER_OBJ_DIR := ./obj/server
 CLIENT_SRC_DIR := ./src/client
 CLIENT_OBJ_DIR := ./obj/client
 IMAGE_SRC_DIR := ./src/image
+ENCRYPTION_SRC_DIR := ./src/encryption
 BIN_DIR     = ./bin
 
 # Subdirectories for source files (can add more here)
-CLIENT_SUBDIRS = $(CLIENT_SRC_DIR) $(IMAGE_SRC_DIR)
+CLIENT_SUBDIRS = $(CLIENT_SRC_DIR) $(IMAGE_SRC_DIR) $(ENCRYPTION_SRC_DIR)
 
-SERVER_SUBDIRS = $(SERVER_SRC_DIR) $(IMAGE_SRC_DIR)
+SERVER_SUBDIRS = $(SERVER_SRC_DIR) $(IMAGE_SRC_DIR) $(ENCRYPTION_SRC_DIR)
 
 # Find all .cpp files in the src/ and its subdirectories
 SERVER_SOURCES = $(foreach dir,$(SERVER_SUBDIRS),$(wildcard $(dir)/*.cpp))
