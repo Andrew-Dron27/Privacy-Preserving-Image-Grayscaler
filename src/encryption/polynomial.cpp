@@ -1,6 +1,14 @@
 #include "polynomial.h"
 #include <stddef.h>
 #include <cmath>
+#include <iostream>
+
+
+Polynomial::Polynomial(){
+
+}
+
+Polynomial::Polynomial(const std::vector<int>& coeffs) : coefficients(coeffs) {degree = coefficients.size() - 1;}
 
 Polynomial Polynomial::multiply(const Polynomial& other) const 
 {
@@ -79,17 +87,30 @@ int Polynomial::evaluate(int x) const
     return result;
 }
 
+void Polynomial::print() const
+{
+    std::cout << "PRINTING POLYNOMIAL OF DEGREE: " << degree << "\n";
+    for(int i = 0; i < coefficients.size(); i++)
+    {
+        std::cout << "Polynomial Coefficients: " << coefficients[i] << "\n";
+    }
+}
+
 std::pair<Polynomial, Polynomial> Polynomial::divide(const Polynomial& divisor) const 
 {
     std::vector<int> quotient(coefficients.size(), 0); 
     std::vector<int> remainder = coefficients;        
+
+    if(divisor.get_coefficients().empty() || divisor.get_coefficients().back() == 0)
+    {
+        throw std::invalid_argument("Divide by zero: The leading term of the divisor cannot be zero.");
+    }
 
     int divisor_degree = divisor.coefficients.size() - 1;
     int divisor_lead_coeff = divisor.coefficients[divisor_degree];
 
     for (int i = remainder.size() - 1; i >= divisor_degree; --i) {
         if (remainder[i] == 0) continue; 
-
         // Calculate the term to subtract from the remainder
         int coeff = remainder[i] / divisor_lead_coeff; // Quotient term coefficient
         int degree_diff = i - divisor_degree; // Difference in degree between dividend and divisor
@@ -110,14 +131,12 @@ std::pair<Polynomial, Polynomial> Polynomial::divide(const Polynomial& divisor) 
     return {Polynomial(quotient), Polynomial(remainder)};
 }
 
-std::vector<int> Polynomial::get_coefficients()
+std::vector<int> Polynomial::get_coefficients() const
 {
     return coefficients;
 }
 
 
-
-Polynomial::Polynomial(const std::vector<int>& coeffs) : coefficients(coeffs) {degree = coefficients.size() - 1;}
 
 Polynomial Polynomial::add(const Polynomial& other) const
 {

@@ -30,6 +30,7 @@ CLIENT_OBJECTS = $(patsubst $(CLIENT_SRC_DIR)/%.cpp, $(CLIENT_OBJ_DIR)/%.o, $(CL
 
 SERVER_TARGET = $(BINDIR)/server
 CLIENT_TARGET = $(BINDIR)/client
+TEST_TARGET = $(BINDIR)/test
 
 all: $(SERVER_TARGET) $(CLIENT_TARGET)
 

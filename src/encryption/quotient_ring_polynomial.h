@@ -15,7 +15,7 @@ private:
     Polynomial coefficients;
 
 public:
-    QuotientRingPolynomial();
+    QuotientRingPolynomial(){};
     QuotientRingPolynomial(int coef_modulus, Polynomial poly_modulus, Polynomial coef);
 
     Polynomial pad(Polynomial poly);
@@ -24,6 +24,7 @@ public:
     void round_poly(int num, int base);
     int mod_center(int num, int mod, bool left_closed = true);
     Polynomial mod_center(Polynomial poly, int mod, bool left_close = true);
+    
     bool check_q_ring(QuotientRingPolynomial);
 
     QuotientRingPolynomial negate();

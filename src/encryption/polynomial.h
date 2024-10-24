@@ -9,6 +9,7 @@ private:
 public:
     int degree;
     // Constructor to initialize a polynomial with given coefficients
+    Polynomial();
     Polynomial(const std::vector<int>& coeffs);
 
     // Function to add two polynomials
@@ -30,12 +31,14 @@ public:
 
     Polynomial mod(int modulus);
 
+    void print() const;
+
     // Function to evaluate the polynomial at a given value of x
     int evaluate(int x) const;
 
     std::pair<Polynomial, Polynomial> divide(const Polynomial& divisor) const;
 
-    std::vector<int> get_coefficients();
+    std::vector<int> get_coefficients() const;
 };
 
 #endif

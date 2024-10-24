@@ -24,9 +24,9 @@ Polynomial QuotientRingPolynomial::pad(Polynomial poly)
     std::vector<int> coef = poly.get_coefficients();
     if(coef.size() == degree)
         return poly;
-    std::vector<int> pad(degree - poly.get_coefficients().size(), 0);
-    coef.insert(coef.end(), pad.begin(), pad.end());
-    return poly;
+    std::vector<int> padding(degree - poly.get_coefficients().size(), 0);
+    coef.insert(coef.end(), padding.begin(), padding.end());
+    return Polynomial(coef);
 }
 
 
@@ -78,7 +78,7 @@ QuotientRingPolynomial QuotientRingPolynomial::operator+(const QuotientRingPolyn
         std::cout << "Polynomails are not in the same ring! ABORT! ABORT BY GOD!" << "\n";
     }
     Polynomial result = coefficients.add(other.coefficients);
-    return QuotientRingPolynomial(coef_modulus, result, poly_modulus); 
+    return QuotientRingPolynomial(coef_modulus, poly_modulus, result); 
 }
 
 QuotientRingPolynomial QuotientRingPolynomial::operator-(const QuotientRingPolynomial& other)
@@ -88,7 +88,7 @@ QuotientRingPolynomial QuotientRingPolynomial::operator-(const QuotientRingPolyn
         std::cout << "Polynomails are not in the same ring! ABORT! ABORT BY GOD!" << "\n";
     }
     Polynomial result = coefficients.subtract(other.coefficients);
-    return QuotientRingPolynomial(coef_modulus, result, poly_modulus); 
+    return QuotientRingPolynomial(coef_modulus, poly_modulus, result); 
 }
 
 QuotientRingPolynomial QuotientRingPolynomial::operator*(const QuotientRingPolynomial& other)
@@ -98,32 +98,32 @@ QuotientRingPolynomial QuotientRingPolynomial::operator*(const QuotientRingPolyn
         std::cout << "Polynomails are not in the same ring! ABORT! ABORT BY GOD!" << "\n";
     }
     Polynomial result = coefficients.multiply(other.coefficients);
-    return QuotientRingPolynomial(coef_modulus, result, poly_modulus); 
+    return QuotientRingPolynomial(coef_modulus, poly_modulus, result); 
 }
 
 QuotientRingPolynomial QuotientRingPolynomial::operator*(int scalar)
 {
     Polynomial result = coefficients * scalar;
 
-    return QuotientRingPolynomial(coef_modulus, result, poly_modulus); 
+    return QuotientRingPolynomial(coef_modulus, poly_modulus, result); 
 }
 
 QuotientRingPolynomial QuotientRingPolynomial::operator/(const QuotientRingPolynomial& other)
 {
-    std::pair<Polynomial, Polynomial> res = coefficients.divide(other.coefficients);
-    return QuotientRingPolynomial(coef_modulus, res.first, poly_modulus); 
+    std::pair<Polynomial, Polynomial> result = coefficients.divide(other.coefficients);
+    return QuotientRingPolynomial(coef_modulus, poly_modulus, result.first);
 }
 
 QuotientRingPolynomial QuotientRingPolynomial::operator/(int scalar)
 {
-    Polynomial res = coefficients / scalar;
-    return QuotientRingPolynomial(coef_modulus, res, poly_modulus); 
+    Polynomial result = coefficients / scalar;
+    return QuotientRingPolynomial(coef_modulus, poly_modulus, result); 
 }
 
 QuotientRingPolynomial QuotientRingPolynomial::operator%(const QuotientRingPolynomial& other)
 {
     std::pair<Polynomial, Polynomial> result = coefficients.divide(other.coefficients);
-    return QuotientRingPolynomial(coef_modulus, result.second, poly_modulus);
+    return QuotientRingPolynomial(coef_modulus, poly_modulus, result.second);
 }
 
 QuotientRingPolynomial QuotientRingPolynomial::operator%(int modulus)

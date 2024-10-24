@@ -18,6 +18,7 @@
 
 #include "../image/image.h"
 #include "../image/network.h"
+#include "../encryption/encryptor.h"
 #include <iostream>
 
 #define PORT "3490"  // the port users will be connecting to
@@ -52,6 +53,23 @@ void *get_in_addr(struct sockaddr *sa)
 
 int main(void)
 {
+    std::cout << "Result:" << "\n";
+    int n = 16;
+    int coef_modulus = 10;
+    int plaintext_modulus = 7;
+    
+    Encryptor encryptor = Encryptor(coef_modulus, n, plaintext_modulus);
+
+    int v1 = 4;
+    int v2 = 7;
+
+    CipherText msg1 = encryptor.encrypt(v1);
+    CipherText msg2 = encryptor.encrypt(v2);
+
+    CipherText result = encryptor.add(msg1, msg2);
+
+    std::cout << "Result: " << encryptor.decrypt(result) << " Expected: " << v1 + v2 << "\n";
+
     int sockfd, new_fd;  // listen on sock_fd, new connection on new_fd
     struct addrinfo hints, *servinfo, *p;
     struct sockaddr_storage their_addr; // connector's address information
