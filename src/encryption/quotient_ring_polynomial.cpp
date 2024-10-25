@@ -21,14 +21,11 @@ void QuotientRingPolynomial::reduce()
 
 Polynomial QuotientRingPolynomial::pad(Polynomial poly)
 {
-    //std::cout << "PADDING: ";
-    //poly.print();
     std::vector<int> coef = poly.get_coefficients();
     if(coef.size() >= degree)
         return poly;
     std::vector<int> padding(degree - poly.get_coefficients().size() + 1, 0);
     coef.insert(coef.end(), padding.begin(), padding.end());
-   // Polynomial(coef).print();
     return Polynomial(coef);
 }
 
