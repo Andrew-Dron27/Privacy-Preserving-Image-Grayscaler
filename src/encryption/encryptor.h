@@ -56,7 +56,7 @@ public:
     Encryptor(int ptm, Polynomial pm, int cm);
     Encryptor(int ptm, int n, int cm);
     Polynomial encode_message(int message);
-    int decode_message(QuotientRingPolynomial encoded);
+    int decode_message(Polynomial encoded);
 
     CipherText encrypt(int plain_text);
      

@@ -1,8 +1,3 @@
-/*
-** server.c -- a stream socket server demo
-** https://beej.us/guide/bgnet/html/#client-server-background
-*/
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -53,14 +48,15 @@ void *get_in_addr(struct sockaddr *sa)
 
 int main(void)
 {
-    std::cout << "Result:" << "\n";
     int n = 16;
-    int coef_modulus = 10;
+    //q
+    int coef_modulus = 2836167622;
+    //t
     int plaintext_modulus = 7;
     
     Encryptor encryptor = Encryptor(coef_modulus, n, plaintext_modulus);
 
-    int v1 = 4;
+    int v1 = 17;
     int v2 = 7;
 
     CipherText msg1 = encryptor.encrypt(v1);
@@ -68,6 +64,7 @@ int main(void)
 
     CipherText result = encryptor.add(msg1, msg2);
 
+    std::cout << "Test: " << (encryptor.decrypt(encryptor.encrypt(v2)) == v1) << "\n";
     std::cout << "Result: " << encryptor.decrypt(result) << " Expected: " << v1 + v2 << "\n";
 
     int sockfd, new_fd;  // listen on sock_fd, new connection on new_fd

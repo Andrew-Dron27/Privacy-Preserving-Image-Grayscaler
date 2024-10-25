@@ -1,8 +1,3 @@
-/*
-** client.c -- a stream socket client demo
-** https://beej.us/guide/bgnet/html/#client-server-background
-*/
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>

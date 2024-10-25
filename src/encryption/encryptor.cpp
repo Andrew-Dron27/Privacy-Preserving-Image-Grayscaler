@@ -4,39 +4,31 @@ Encryptor::Encryptor(int ptm, Polynomial pm, int cm) : plaintext_modulus(ptm), p
 
 Encryptor::Encryptor(int ptm, int n, int cm)
 {
-    std::cout << "CREATING ENCRYPTOR CLASS" << "\n";
     plaintext_modulus = ptm;
     coef_modulus = cm;
-    std::cout << "CREATING POLY MODULUS" << "\n";
     poly_modulus = create_poly_modulus(n);
-    std::cout << "CREATING PRIVATE KEY" << "\n";
     private_key = gen_private_key();
-    std::cout << "CREATING PUBLIC KEY" << "\n";
     public_key = gen_public_key();
 }
 
 Polynomial Encryptor::encode_message(int message)
 {
     std::vector<int> bits;
-
-    // Iterate over each bit of the integer
     for (int i = 0; i < sizeof(int) * 8; ++i) {
-        // Extract the least significant bit and push it to the vector
         bits.push_back((message >> i) & 1);
     }
-
     return Polynomial(bits);
 }
 
-int Encryptor::decode_message(QuotientRingPolynomial m)
+int Encryptor::decode_message(Polynomial m)
 {
-    std::vector<int> bits = m.get_coefficients().get_coefficients();
+    std::vector<int> bits = m.get_coefficients();
     int message = 0;
 
     // Iterate over the vector, assuming bits are in reverse order (LSB to MSB)
     for (int i = 0; i < bits.size(); ++i) {
         if (bits[i] == 1) {
-            message |= (1 << i);  // Set the i-th bit of the integer
+            message |= (1 << i);
         }
     }
 
@@ -48,8 +40,8 @@ CipherText Encryptor::encrypt(int plain_text)
     QuotientRingPolynomial e1 = random_normal_poly();
     QuotientRingPolynomial e2 = random_normal_poly();
     QuotientRingPolynomial u = random_ternary_poly();
-    QuotientRingPolynomial C1 = public_key.c1 * u + e1 * plaintext_modulus 
-        + QuotientRingPolynomial(coef_modulus, poly_modulus, encode_message(plain_text));
+    QuotientRingPolynomial M = QuotientRingPolynomial(coef_modulus, poly_modulus, encode_message(plain_text));
+    QuotientRingPolynomial C1 = public_key.c1 * u + e1 * plaintext_modulus + M;
     QuotientRingPolynomial C2 = public_key.c2 * u + e2 * plaintext_modulus;
 
     return {C1, C2};
@@ -57,16 +49,15 @@ CipherText Encryptor::encrypt(int plain_text)
 
 int Encryptor::decrypt(CipherText cipher_text)
 {
-    QuotientRingPolynomial message = (cipher_text.c1 + cipher_text.c2 * private_key) % coef_modulus;
-    return (decode_message(message));
+    QuotientRingPolynomial message = (cipher_text.c1 + cipher_text.c2 * private_key) % plaintext_modulus;
+    return (decode_message(message.get_coefficients()));
 }
 
 int Encryptor::decrypt_quad(CipherTextQuad quad)
 {
-    QuotientRingPolynomial linear_msg = quad.c1 + quad.c2 * private_key + quad.c3 * private_key * private_key;
+    QuotientRingPolynomial linear_msg = (quad.c1 + quad.c2 * private_key + quad.c3 * private_key * private_key) % plaintext_modulus;
 
-    //noise = np.max(np.abs(msg.coef))
-    return decode_message(linear_msg % coef_modulus);
+    return decode_message(linear_msg.get_coefficients());
 }
 
 Polynomial Encryptor::create_poly_modulus(int n)
@@ -93,7 +84,6 @@ CipherText Encryptor::gen_public_key()
     QuotientRingPolynomial a = random_uniform_poly();
     
     QuotientRingPolynomial pk1 = a * private_key + e * plaintext_modulus;
-    std::cout << "CREATED PUBLIC KEY" << "\n";
     return {pk1, a.negate()};
 }
 
@@ -105,7 +95,7 @@ QuotientRingPolynomial Encryptor::gen_private_key()
 
 QuotientRingPolynomial Encryptor::random_binary_poly()
 {
-    std::cout << "Creating Random binary poly" << "\n";
+    //std::cout << "Creating Random binary poly" << "\n";
     std::vector<int> res(poly_modulus.degree);
 
     for(size_t i = 0; i < poly_modulus.degree; i++)
@@ -119,7 +109,6 @@ QuotientRingPolynomial Encryptor::random_binary_poly()
 
 QuotientRingPolynomial Encryptor::random_ternary_poly()
 {
-    std::cout << "Creating Random ternary poly" << "\n";
     std::vector<int> res(poly_modulus.degree);
 
     for(size_t i = 0; i < poly_modulus.degree; i++)
@@ -132,7 +121,6 @@ QuotientRingPolynomial Encryptor::random_ternary_poly()
 
 QuotientRingPolynomial Encryptor::random_uniform_poly()
 {
-    std::cout << "Creating Random uniform poly" << "\n";
 
     std::uniform_int_distribution<int> uniform_distribution {0, coef_modulus-1};
     
@@ -147,12 +135,12 @@ QuotientRingPolynomial Encryptor::random_uniform_poly()
 
 QuotientRingPolynomial Encryptor::random_normal_poly()
 {
-    std::cout << "Creating Random normal poly" << "\n";
     std::vector<int> res(poly_modulus.degree);
 
     for(size_t i = 0; i < poly_modulus.degree; i++)
     {
         res[i] = normal_distribution(generator);
+        std::cout << res[i] << "\n";
     }
     
     return QuotientRingPolynomial(coef_modulus, poly_modulus, Polynomial(res));

@@ -4,9 +4,7 @@
 #include <iostream>
 
 
-Polynomial::Polynomial(){
-
-}
+Polynomial::Polynomial(){}
 
 Polynomial::Polynomial(const std::vector<int>& coeffs) : coefficients(coeffs) {degree = coefficients.size() - 1;}
 
@@ -89,11 +87,13 @@ int Polynomial::evaluate(int x) const
 
 void Polynomial::print() const
 {
-    std::cout << "PRINTING POLYNOMIAL OF DEGREE: " << degree << "\n";
+    std::cout << "PRINTING POLYNOMIAL OF DEGREE " << degree << "\n" << ":[ ";
+
     for(int i = 0; i < coefficients.size(); i++)
     {
-        std::cout << "Polynomial Coefficients: " << coefficients[i] << "\n";
+        std::cout <<", " << coefficients[i];
     }
+    std::cout << "]\n"; 
 }
 
 std::pair<Polynomial, Polynomial> Polynomial::divide(const Polynomial& divisor) const 
@@ -103,7 +103,7 @@ std::pair<Polynomial, Polynomial> Polynomial::divide(const Polynomial& divisor) 
 
     if(divisor.get_coefficients().empty() || divisor.get_coefficients().back() == 0)
     {
-        throw std::invalid_argument("Divide by zero: The leading term of the divisor cannot be zero.");
+        throw std::invalid_argument("The leading term of the divisor cannot be zero.");
     }
 
     int divisor_degree = divisor.coefficients.size() - 1;

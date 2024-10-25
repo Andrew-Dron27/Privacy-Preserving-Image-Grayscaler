@@ -48,5 +48,7 @@ public:
 
     Polynomial get_coefficients();
 
+    void print();
+
 };
 #endif

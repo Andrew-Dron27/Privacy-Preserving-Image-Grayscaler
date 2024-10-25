@@ -21,20 +21,16 @@ void QuotientRingPolynomial::reduce()
 
 Polynomial QuotientRingPolynomial::pad(Polynomial poly)
 {
+    //std::cout << "PADDING: ";
+    //poly.print();
     std::vector<int> coef = poly.get_coefficients();
-    if(coef.size() == degree)
+    if(coef.size() >= degree)
         return poly;
-    std::vector<int> padding(degree - poly.get_coefficients().size(), 0);
+    std::vector<int> padding(degree - poly.get_coefficients().size() + 1, 0);
     coef.insert(coef.end(), padding.begin(), padding.end());
+   // Polynomial(coef).print();
     return Polynomial(coef);
 }
-
-
-void QuotientRingPolynomial::round_poly(int num, int base)
-{
-
-}
-
 
 Polynomial QuotientRingPolynomial::mod_center(Polynomial poly, int mod, bool left_close)
 {
@@ -98,6 +94,7 @@ QuotientRingPolynomial QuotientRingPolynomial::operator*(const QuotientRingPolyn
         std::cout << "Polynomails are not in the same ring! ABORT! ABORT BY GOD!" << "\n";
     }
     Polynomial result = coefficients.multiply(other.coefficients);
+    result.print();
     return QuotientRingPolynomial(coef_modulus, poly_modulus, result); 
 }
 
@@ -140,6 +137,14 @@ bool QuotientRingPolynomial::operator==(const QuotientRingPolynomial& other)
 Polynomial QuotientRingPolynomial::get_coefficients()
 {
     return coefficients;
+}
+
+void QuotientRingPolynomial::print()
+{
+    std::cout << "Coef Modulus: " << coef_modulus << " Poly_Modulus:\n ";
+    poly_modulus.print();
+    std::cout << "Coefficients:\n ";
+    coefficients.print();
 }
 
 //#endregion
