@@ -145,13 +145,13 @@ int main(void)
         std::cout << "Server received connection from: " << s << "\n";
 
         if (!fork()) { // this is the child process
+            // Image img;
 
-            Image img;
-
-            if(recv_image(new_fd, img) == true){
-                img.grayscale_lum();
-                send_image(new_fd, img);
-            }
+            // if(recv_image(new_fd, img) == true){
+            //     img.grayscale_lum();
+            //     send_image(new_fd, img);
+            // }
+            
 
             close(sockfd);
             exit(0);

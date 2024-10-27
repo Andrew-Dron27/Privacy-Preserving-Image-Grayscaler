@@ -5,6 +5,7 @@
 #include "image.h"
 #include <iostream>
 
+
 Image::Image(){
 
 }
@@ -20,9 +21,17 @@ Image::Image(const char* file_name) {
     }
 }
 
-Image::Image(uint8_t* _data, int size){
+Image::Image(uint8_t* _data, size_t _size, int _w, int _h){
 	std::copy(_data, _data + size, data);
+	size = _size;
+	width = _w;
+	height = _h;
 }
+
+
+// Image::Image(uint8_t* _data, int size){
+// 	std::copy(_data, _data + size, data);
+// }
 
 Image::Image(int w, int h, int channels) : width(w), height(h), channels(channels) {
 	size = w*h*channels;

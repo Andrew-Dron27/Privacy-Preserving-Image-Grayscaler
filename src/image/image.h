@@ -13,13 +13,13 @@ struct Image {
 	Image();
 	Image(const char* file_name);
 	Image(int w, int h, int channels);
-	Image(uint8_t* image_data, int size);
+	Image(uint8_t* image_data, size_t size, int w, int h);
 	Image(const Image& img);
 	~Image();
 
 	bool read_image(const char* file_name);
 	bool write_image(const char* file_name);
-
+	
 	Image& grayscale_avg();
 	Image& grayscale_lum();
 };

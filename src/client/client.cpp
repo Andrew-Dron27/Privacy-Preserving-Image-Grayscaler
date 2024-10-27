@@ -14,6 +14,7 @@
 
 #include "../image/image.h"
 #include "../image/network.h"
+#include "../image/image_encryptor.h"
 
 #define PORT "3490" // the port client will be connecting to 
 
@@ -27,6 +28,85 @@ void *get_in_addr(struct sockaddr *sa)
     }
 
     return &(((struct sockaddr_in6*)sa)->sin6_addr);
+}
+
+void send_img_to_greyscale(int sock, char* file_read_path, char* file_write_path, int scalar_val, int scale_factor)
+{
+    Image image = Image(file_read_path);
+        // Plaintext prime modulus.
+	long p = 2;
+	// Cyclotomic polynomial - defines phi(m).
+	long m = 4095;
+	// Hensel lifting (default = 1).
+	long r = 1;
+	// Number of bits of the modulus chain.
+	long bits = 500;
+	// Number of columns of Key-Switching matrix (typically 2 or 3).
+	long c = 2;
+	// Factorisation of m required for bootstrapping.
+	std::vector<long> mvec = {7, 5, 9, 13};
+	// Generating set of Zm* group.
+	std::vector<long> gens = {2341, 3277, 911};
+	// Orders of the previous generators.
+	std::vector<long> ords = {6, 4, 6};
+
+    const helib::Context& context = helib::ContextBuilder<helib::BGV>()
+                               .m(m)
+                               .p(p)
+                               .r(r)
+                               .gens(gens)
+                               .ords(ords)
+                               .bits(bits)
+                               .c(c)
+                               .bootstrappable(true)
+                               .mvec(mvec)
+                               .build();
+
+    // Create a secret key associated with the context.
+	helib::SecKey secret_key(context);
+	// Generate the secret key.
+	secret_key.GenSecKey();
+
+	// Generate bootstrapping data.
+	secret_key.genRecryptData();
+
+	// Public key management.
+	// Set the secret key (upcast: SecKey is a subclass of PubKey).
+	const helib::PubKey& public_key = secret_key;
+
+	// Get the EncryptedArray of the context.
+	const helib::EncryptedArray& ea = context.getEA();
+
+	// Build the unpack slot encoding.
+	std::vector<helib::zzX> unpackSlotEncoding;
+	buildUnpackSlotEncoding(unpackSlotEncoding, ea);
+
+	// Get the number of slot (phi(m)).
+	long nslots = ea.size();
+
+    helib::SecKey secret_key(context);
+    // Generate the secret key.
+    secret_key.GenSecKey();
+
+    // Generate bootstrapping data.
+    secret_key.genRecryptData();
+
+    helib::Ptxt<helib::BGV> scalar(context);
+    scalar[0] = scalar_val;
+    helib::Ctxt enc_scalar(public_key);
+
+    public_key.Encrypt(enc_scalar, scalar);
+
+    Image greyscale;
+    int h = image.height;
+    int w = image.width;
+    if(send_encrypted_image(sock, ImageEncryptor::encrypt_image_data(image, context, public_key), enc_scalar, public_key))
+    {
+        if(recv_encrypted_image(sock, greyscale, image.width, image.height, scale_factor, context, secret_key))
+        {
+            greyscale.write_image(file_write_path);
+        }
+    }
 }
 
 int main(int argc, char *argv[])
@@ -82,16 +162,18 @@ int main(int argc, char *argv[])
 
     freeaddrinfo(servinfo); // all done with this structure
 
-    Image image = Image(file_read_path);
-    Image greyscale;
+    // Image greyscale;
 
-    if(send_image(sockfd, image)){
-        if(recv_image(sockfd,greyscale)){
-            greyscale.write_image(file_write_path);
-        }
-    }
+    // if(send_image(sockfd, image)){
+    //     if(recv_image(sockfd,greyscale)){
+    //         greyscale.write_image(file_write_path);
+    //     }
+    // }
+
+    send_img_to_greyscale(sockfd, file_read_path, file_write_path, 33, 100);
 
     close(sockfd);
 
     return 0;
 }
+
