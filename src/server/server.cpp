@@ -46,6 +46,8 @@ void *get_in_addr(struct sockaddr *sa)
     return &(((struct sockaddr_in6*)sa)->sin6_addr);
 }
 
+
+
 int main(void)
 {
     int n = 16;
@@ -145,14 +147,24 @@ int main(void)
         std::cout << "Server received connection from: " << s << "\n";
 
         if (!fork()) { // this is the child process
-            // Image img;
+            Image img;
 
             // if(recv_image(new_fd, img) == true){
             //     img.grayscale_lum();
             //     send_image(new_fd, img);
             // }
-            
+            const helib::Context& context = ImageEncryptor::init_helib_context();
+            helib::PubKey client_pk = receive_public_key(new_fd, context);
+            std::vector<enc_pixel_data> encrypted_image = recv_encrypted_pixels(new_fd, client_pk);
 
+            helib::Ptxt<helib::BGV> scalar(context);
+            scalar[0] = 33;
+            helib::Ctxt enc_scalar(client_pk);
+            client_pk.Encrypt(enc_scalar, scalar);
+
+            send_encrypted_image(new_fd, ImageEncryptor::greyscale_data(encrypted_image, client_pk, enc_scalar),
+                client_pk);
+            
             close(sockfd);
             exit(0);
         }

@@ -33,34 +33,8 @@ void *get_in_addr(struct sockaddr *sa)
 void send_img_to_greyscale(int sock, char* file_read_path, char* file_write_path, int scalar_val, int scale_factor)
 {
     Image image = Image(file_read_path);
-        // Plaintext prime modulus.
-	long p = 2;
-	// Cyclotomic polynomial - defines phi(m).
-	long m = 4095;
-	// Hensel lifting (default = 1).
-	long r = 1;
-	// Number of bits of the modulus chain.
-	long bits = 500;
-	// Number of columns of Key-Switching matrix (typically 2 or 3).
-	long c = 2;
-	// Factorisation of m required for bootstrapping.
-	std::vector<long> mvec = {7, 5, 9, 13};
-	// Generating set of Zm* group.
-	std::vector<long> gens = {2341, 3277, 911};
-	// Orders of the previous generators.
-	std::vector<long> ords = {6, 4, 6};
 
-    const helib::Context& context = helib::ContextBuilder<helib::BGV>()
-                               .m(m)
-                               .p(p)
-                               .r(r)
-                               .gens(gens)
-                               .ords(ords)
-                               .bits(bits)
-                               .c(c)
-                               .bootstrappable(true)
-                               .mvec(mvec)
-                               .build();
+    const helib::Context& context = ImageEncryptor::init_helib_context();
 
     // Create a secret key associated with the context.
 	helib::SecKey secret_key(context);
@@ -97,16 +71,22 @@ void send_img_to_greyscale(int sock, char* file_read_path, char* file_write_path
 
     public_key.Encrypt(enc_scalar, scalar);
 
-    Image greyscale;
+    //Image greyscale;
     int h = image.height;
     int w = image.width;
-    if(send_encrypted_image(sock, ImageEncryptor::encrypt_image_data(image, context, public_key), enc_scalar, public_key))
+    if(send_public_key(sock, public_key))
     {
-        if(recv_encrypted_image(sock, greyscale, image.width, image.height, scale_factor, context, secret_key))
+        if(send_encrypted_image(sock, ImageEncryptor::encrypt_image_data(image, context, public_key), public_key))
         {
+            std::vector<enc_pixel_data> enc_data = recv_encrypted_pixels(sock, public_key);
+            std::cout << "Decrypting image data" << "\n";
+            Image greyscale = ImageEncryptor::decrypt_image_data(enc_data, context, secret_key, scale_factor, w, h);
+            std::cout << "Writing image to file path: " << file_write_path << "\n";
             greyscale.write_image(file_write_path);
         }
     }
+
+
 }
 
 int main(int argc, char *argv[])

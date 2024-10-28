@@ -9,9 +9,18 @@ bool send_image(int sock, Image& image);
 bool recv_image(int sock, Image& image);
 
 bool send_encrypted_image(int sock, std::vector<enc_pixel_data>, 
-    helib::Ctxt scalar, const helib::PubKey& public_key);
+    const helib::PubKey& public_key);
 
-bool recv_encrypted_image(int sock, Image& image, int w, int h, int scale_factor,
-    const helib::Context& context, const helib::SecKey& secret_key);
+bool send_public_key(int sock, const helib::PubKey& publicKey);
+
+helib::PubKey receive_public_key(int sock, const helib::Context& context);
+
+bool send_cipher_texts(int sock, std::vector<enc_pixel_data> enc_pixels);
+
+std::vector<enc_pixel_data> recv_encrypted_pixels(int sock, const helib::PubKey& public_key);
+
+std::vector<enc_pixel_data> recv_encrypted_pixels(int sock, const helib::PubKey& public_key);
+
+bool recv_image(int sock, Image& image)
 
 #endif

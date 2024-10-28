@@ -44,26 +44,8 @@ bool send_image(int sock, Image& image){
     return true;
 }
 
-bool send_encrypted_image(int sock, const std::vector<enc_pixel_data>& enc_data,
-     helib::Ctxt scalar, const helib::PubKey& public_key)
+bool send_encrypted_image(int sock, const std::vector<enc_pixel_data>& enc_data, const helib::PubKey& public_key)
 {
-
-    //send public key
-    size_t pb_size = sizeof(public_key);
-
-    ssize_t sentBytes = send(sock, &pb_size, sizeof(pb_size), 0);
-    
-    if (sentBytes == -1) {
-        std::cout << "Error when sending public key size " << strerror(errno) << "\n";
-        return false;
-    }
-
-    sentBytes = send(sock, &public_key, pb_size, 0);
-
-    if (sentBytes == -1) {
-        std::cout << "Error when sending public key " << strerror(errno) << "\n";
-        return false;
-    }
 
     int size = enc_data.size();
 
@@ -93,38 +75,46 @@ bool send_encrypted_image(int sock, const std::vector<enc_pixel_data>& enc_data,
 }
 
 
-bool recv_encrypted_image(int sock, Image& image, int width, int height, 
-    int scale_factor, const helib::Context& context, const helib::SecKey& secret_key)
-{
-    std::vector<enc_pixel_data> enc_data;
+// std::vector<enc_pixel_data> recv_encrypted_image(int sock, const helib::Context& context, helib::PubKey public_key)
+// {
+//     std::vector<enc_pixel_data> enc_pixels = recv_encrypted_pixels(sock, public_key);
 
-    helib::PubKey public_key = receivePublicKey(sock, context);
+//     //image = ImageEncryptor::decrypt_image_data(enc_data, context, secret_key, scale_factor, width, height);
 
-    std::vector<enc_pixel_data> enc_pixels = recv_encrypted_pixels(sock, public_key);
+//     return enc_pixels;
+// }
 
-    image = ImageEncryptor::decrypt_image_data(enc_data, context, secret_key, scale_factor, width, height);
+
+bool send_public_key(int sock, const helib::PubKey& public_key) {
+    // Create a string stream to hold the serialized public key
+    std::ostringstream oss;
+    public_key.writeTo(oss); // Serialize the public key into the stream
+
+    // Retrieve the serialized data as a string
+    std::string serializedData = oss.str();
+
+    //send public key
+    size_t pb_size = sizeof(serializedData);
+
+    ssize_t sentBytes = send(sock, &pb_size, sizeof(pb_size), 0);
+    
+    if (sentBytes == -1) {
+        std::cout << "Error when sending public key size " << strerror(errno) << "\n";
+        return false;
+    }
+
+    sentBytes = send(sock, &serializedData, pb_size, 0);
+
+    if (sentBytes == -1) {
+        std::cout << "Error when sending public key " << strerror(errno) << "\n";
+        return false;
+    }
 
     return true;
 }
 
 
-void sendPublicKey(const helib::PubKey& publicKey) {
-    // Create a string stream to hold the serialized public key
-    std::ostringstream oss;
-    publicKey.writeTo(oss); // Serialize the public key into the stream
-
-    // Retrieve the serialized data as a string
-    std::string serializedData = oss.str();
-
-    // Send `serializedData` over your chosen communication channel
-    // For example, you could write this data to a file or a socket
-    std::ofstream file("publicKey.bin", std::ios::binary);
-    file.write(serializedData.data(), serializedData.size());
-    file.close();
-}
-
-
-helib::PubKey receivePublicKey(int sock, const helib::Context& context) {
+helib::PubKey receive_public_key(int sock, const helib::Context& context) {
 
     size_t pb_size;
 
@@ -146,7 +136,6 @@ helib::PubKey receivePublicKey(int sock, const helib::Context& context) {
         }
         bytesReceived += result;
     }
-
     
     std::stringstream oss;
     oss << data;
@@ -168,7 +157,6 @@ bool send_cipher_texts(int sock, std::vector<enc_pixel_data> enc_pixels)
     }
 
     std::vector<helib::Ctxt> cipher_texts(num_pixels);
-    // Serialize and send each ciphertext
     for (const auto& pixel : enc_pixels) 
     {
         cipher_texts.push_back(pixel.red);
@@ -176,20 +164,17 @@ bool send_cipher_texts(int sock, std::vector<enc_pixel_data> enc_pixels)
         cipher_texts.push_back(pixel.blue);
     }
 
-    // Serialize and send each ciphertext
     for (const auto& ciphertext : cipher_texts) {
         std::ostringstream oss;
-        ciphertext.writeTo(oss); // Serialize the ciphertext
+        ciphertext.writeTo(oss); 
         std::string serializedData = oss.str();
 
-        // Send the size of the serialized data
         uint32_t dataSize = htonl(serializedData.size());
         if (send(sock, &dataSize, sizeof(dataSize), 0) == -1) {
             perror("send");
             return false;
         }
 
-        // Send the actual serialized data
         if (send(sock, serializedData.c_str(), serializedData.size(), 0) == -1) {
             perror("send");
             return false;
@@ -200,7 +185,6 @@ bool send_cipher_texts(int sock, std::vector<enc_pixel_data> enc_pixels)
     return true;
 
 }
-
 // bool send_cipher_text(int sock, const helib::Ctxt cipher_text)
 // {
 //     std::ostringstream oss;

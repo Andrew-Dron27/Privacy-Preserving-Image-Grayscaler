@@ -37,7 +37,7 @@ public:
     static Image decrypt_image_data(std::vector<enc_pixel_data> encrypted_image, const helib::Context& context,
          helib::SecKey secret_key, int scale_factor, int w, int h)
     {
-        std::vector<size_t> img_data(encrypted_image.size() * 3);
+        std::vector<uint8_t> img_data(encrypted_image.size() * 3);
 
         helib::Ptxt<helib::BGV> decryptedRed(context);
         helib::Ptxt<helib::BGV> decryptedGreen(context);
@@ -107,6 +107,40 @@ public:
             bits[i] = (num >> i) & 1;
         }
         return bits;
+    }
+
+    static const helib::Context& init_helib_context()
+    {
+        // Plaintext prime modulus.
+        long p = 2;
+        // Cyclotomic polynomial - defines phi(m).
+        long m = 4095;
+        // Hensel lifting (default = 1).
+        long r = 1;
+        // Number of bits of the modulus chain.
+        long bits = 500;
+        // Number of columns of Key-Switching matrix (typically 2 or 3).
+        long c = 2;
+        // Factorisation of m required for bootstrapping.
+        std::vector<long> mvec = {7, 5, 9, 13};
+        // Generating set of Zm* group.
+        std::vector<long> gens = {2341, 3277, 911};
+        // Orders of the previous generators.
+        std::vector<long> ords = {6, 4, 6};
+
+        const helib::Context& context = helib::ContextBuilder<helib::BGV>()
+                                .m(m)
+                                .p(p)
+                                .r(r)
+                                .gens(gens)
+                                .ords(ords)
+                                .bits(bits)
+                                .c(c)
+                                .bootstrappable(true)
+                                .mvec(mvec)
+                                .build();
+
+        return context;
     }
 };
 
