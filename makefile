@@ -1,5 +1,5 @@
 CXX = g++
-CXXFLAGS = -Wall -Wextra -std=c++17 -g
+CXXFLAGS = -Wall -Wextra -std=c++17 -g -lhelib
 
 SRCDIR = src
 OBJDIR = obj
@@ -11,12 +11,16 @@ CLIENT_SRC_DIR := ./src/client
 CLIENT_OBJ_DIR := ./obj/client
 IMAGE_SRC_DIR := ./src/image
 ENCRYPTION_SRC_DIR := ./src/encryption
-BIN_DIR     = ./bin
+BIN_DIR     := ./bin
+LIBS = -lntl -lgmp -lm
+HELIB_INC := /usr/local/include/helib
+HELIB_LIB := /usr/local/lib/libhelib.a
+
 
 # Subdirectories for source files (can add more here)
-CLIENT_SUBDIRS = $(CLIENT_SRC_DIR) $(IMAGE_SRC_DIR) $(ENCRYPTION_SRC_DIR)
+CLIENT_SUBDIRS = $(CLIENT_SRC_DIR) $(IMAGE_SRC_DIR)# $(ENCRYPTION_SRC_DIR)
 
-SERVER_SUBDIRS = $(SERVER_SRC_DIR) $(IMAGE_SRC_DIR) $(ENCRYPTION_SRC_DIR)
+SERVER_SUBDIRS = $(SERVER_SRC_DIR) $(IMAGE_SRC_DIR)# $(ENCRYPTION_SRC_DIR)
 
 # Find all .cpp files in the src/ and its subdirectories
 SERVER_SOURCES = $(foreach dir,$(SERVER_SUBDIRS),$(wildcard $(dir)/*.cpp))
@@ -37,11 +41,11 @@ all: $(SERVER_TARGET) $(CLIENT_TARGET)
 # Link object files to create the executable
 $(SERVER_TARGET): $(SERVER_OBJECTS)
 	@mkdir -p $(BINDIR)
-	$(CXX) $(SERVER_OBJECTS) -o $(SERVER_TARGET)
+	$(CXX) $(SERVER_OBJECTS) $(HELIB_LIB) -lhelib -o  $(SERVER_TARGET) $(LIBS)
 
 $(CLIENT_TARGET): $(CLIENT_OBJECTS)
 	@mkdir -p $(BINDIR)
-	$(CXX) $(CLIENT_OBJECTS) -o $(CLIENT_TARGET)
+	$(CXX) $(CLIENT_OBJECTS) $(HELIB_LIB) -lhelib -o $(CLIENT_TARGET) $(LIBS)
 
 # Compile library object files
 $(OBJDIR)/image/%.o: $(IMAGE_SRC_DIR)/%.cpp

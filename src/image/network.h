@@ -3,12 +3,13 @@
 
 #include "image.h"
 #include "image_encryptor.h"
+#include <helib/helib.h>
 
 bool send_image(int sock, Image& image);
 
 bool recv_image(int sock, Image& image);
 
-bool send_encrypted_image(int sock, std::vector<enc_pixel_data>, 
+bool send_encrypted_image(int sock, const std::vector<enc_pixel_data>&, 
     const helib::PubKey& public_key);
 
 bool send_public_key(int sock, const helib::PubKey& publicKey);
@@ -21,6 +22,6 @@ std::vector<enc_pixel_data> recv_encrypted_pixels(int sock, const helib::PubKey&
 
 std::vector<enc_pixel_data> recv_encrypted_pixels(int sock, const helib::PubKey& public_key);
 
-bool recv_image(int sock, Image& image)
+bool recv_image(int sock, Image& image);
 
 #endif

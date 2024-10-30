@@ -70,6 +70,7 @@ public:
             grey_pixel *= scalar;
             enc_data[i] = enc_pixel_data(grey_pixel, grey_pixel, grey_pixel);
         }
+        return enc_data;
     }
 
     static enc_pixel_data encrypt_pixel(int red, int green, int blue, const helib::Context& context,

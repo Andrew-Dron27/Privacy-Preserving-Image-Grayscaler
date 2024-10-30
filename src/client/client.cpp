@@ -15,6 +15,7 @@
 #include "../image/image.h"
 #include "../image/network.h"
 #include "../image/image_encryptor.h"
+#include "helib/helib.h"
 
 #define PORT "3490" // the port client will be connecting to 
 
@@ -58,13 +59,6 @@ void send_img_to_greyscale(int sock, char* file_read_path, char* file_write_path
 	// Get the number of slot (phi(m)).
 	long nslots = ea.size();
 
-    helib::SecKey secret_key(context);
-    // Generate the secret key.
-    secret_key.GenSecKey();
-
-    // Generate bootstrapping data.
-    secret_key.genRecryptData();
-
     helib::Ptxt<helib::BGV> scalar(context);
     scalar[0] = scalar_val;
     helib::Ctxt enc_scalar(public_key);
@@ -85,7 +79,6 @@ void send_img_to_greyscale(int sock, char* file_read_path, char* file_write_path
             greyscale.write_image(file_write_path);
         }
     }
-
 
 }
 

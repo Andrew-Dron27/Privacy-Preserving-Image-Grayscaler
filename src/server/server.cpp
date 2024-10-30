@@ -13,7 +13,8 @@
 
 #include "../image/image.h"
 #include "../image/network.h"
-#include "../encryption/encryptor.h"
+//#include "../encryption/encryptor.h"
+#include "helib/helib.h"
 #include <iostream>
 
 #define PORT "3490"  // the port users will be connecting to
@@ -50,24 +51,24 @@ void *get_in_addr(struct sockaddr *sa)
 
 int main(void)
 {
-    int n = 16;
-    //q
-    int coef_modulus = 2836167622;
-    //t
-    int plaintext_modulus = 7;
+    // int n = 16;
+    // //q
+    // int coef_modulus = 2836167622;
+    // //t
+    // int plaintext_modulus = 7;
     
-    Encryptor encryptor = Encryptor(coef_modulus, n, plaintext_modulus);
+    // Encryptor encryptor = Encryptor(coef_modulus, n, plaintext_modulus);
 
-    int v1 = 17;
-    int v2 = 7;
+    // int v1 = 17;
+    // int v2 = 7;
 
-    CipherText msg1 = encryptor.encrypt(v1);
-    CipherText msg2 = encryptor.encrypt(v2);
+    // CipherText msg1 = encryptor.encrypt(v1);
+    // CipherText msg2 = encryptor.encrypt(v2);
 
-    CipherText result = encryptor.add(msg1, msg2);
+    // CipherText result = encryptor.add(msg1, msg2);
 
-    std::cout << "Test: " << (encryptor.decrypt(encryptor.encrypt(v2)) == v1) << "\n";
-    std::cout << "Result: " << encryptor.decrypt(result) << " Expected: " << v1 + v2 << "\n";
+    // std::cout << "Test: " << (encryptor.decrypt(encryptor.encrypt(v2)) == v1) << "\n";
+    // std::cout << "Result: " << encryptor.decrypt(result) << " Expected: " << v1 + v2 << "\n";
 
     int sockfd, new_fd;  // listen on sock_fd, new connection on new_fd
     struct addrinfo hints, *servinfo, *p;
