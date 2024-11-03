@@ -51,6 +51,16 @@ bool Image::read_image(const char* image_path) {
     return data != NULL;
 }
 
+void Image::get_channels(std::vector<long>& red, std::vector<long>& green, std::vector<long>& blue) const
+{
+	for(size_t i = 0; i < size; i+=channels)
+	{
+		red.push_back(data[i]);
+		green.push_back(data[i+1]);
+		blue.push_back(data[i+2]);
+	}
+}
+
 bool Image::write_image(const char* image_path) {;
     int success = stbi_write_jpg(image_path, width, height, channels, data, 100);
 	if(success != 1){
@@ -65,7 +75,7 @@ Image& Image::grayscale_lum(){
 	float red_lum = 0.21;
 	float green_lum = 0.72;
 	float blue_lum = 0.07;
-	for(int i = 0; i < size; i+=channels){
+	for(size_t i = 0; i < size; i+=channels){
 		int gray = (floor(data[i] * red_lum) + floor(data[i+1] * green_lum) + floor(data[i+2] * blue_lum));
 		memset(data+i, gray, 3);
 	}

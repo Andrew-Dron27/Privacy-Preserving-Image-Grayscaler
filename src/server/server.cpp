@@ -14,7 +14,7 @@
 #include "../image/image.h"
 #include "../image/network.h"
 //#include "../encryption/encryptor.h"
-#include "helib/helib.h"
+#include <helib/helib.h>
 #include <iostream>
 
 #define PORT "3490"  // the port users will be connecting to
@@ -69,6 +69,7 @@ int main(void)
 
     // std::cout << "Test: " << (encryptor.decrypt(encryptor.encrypt(v2)) == v1) << "\n";
     // std::cout << "Result: " << encryptor.decrypt(result) << " Expected: " << v1 + v2 << "\n";
+
 
     int sockfd, new_fd;  // listen on sock_fd, new connection on new_fd
     struct addrinfo hints, *servinfo, *p;
@@ -163,8 +164,7 @@ int main(void)
             helib::Ctxt enc_scalar(client_pk);
             client_pk.Encrypt(enc_scalar, scalar);
 
-            send_encrypted_image(new_fd, ImageEncryptor::greyscale_data(encrypted_image, client_pk, enc_scalar),
-                client_pk);
+            send_encrypted_image(new_fd, ImageEncryptor::greyscale_data(encrypted_image, client_pk, enc_scalar));
             
             close(sockfd);
             exit(0);

@@ -28,7 +28,7 @@ bool send_image(int sock, Image& image){
 
     std::cout << "sent image details" << "\n";
 
-    int total_bytes_sent = 0;
+    size_t total_bytes_sent = 0;
 
     while(total_bytes_sent < image.size){
         sentBytes = send(sock, image.data + total_bytes_sent, image.size - total_bytes_sent, 0);
@@ -44,12 +44,13 @@ bool send_image(int sock, Image& image){
     return true;
 }
 
-bool send_encrypted_image(int sock, const std::vector<enc_pixel_data>& enc_data, const helib::PubKey& public_key)
+bool send_encrypted_image(int sock, const std::vector<enc_pixel_data>& enc_data)
 {
+    size_t data_size = enc_data.size();
 
-    int size = enc_data.size();
+    std::cout << "Sending Encrypted Image" << "\n";
 
-    ssize_t sentBytes = send(sock, &size, sizeof(enc_data.size()), 0);
+    ssize_t sentBytes = send(sock, &data_size, sizeof(enc_data.size()), 0);
     
     if (sentBytes == -1) {
         std::cout << "Error when sending encrypted image size " << strerror(errno) << "\n";
@@ -58,11 +59,11 @@ bool send_encrypted_image(int sock, const std::vector<enc_pixel_data>& enc_data,
 
     std::cout << "sent image details" << "\n";
 
-    int total_bytes_sent = 0;
+    size_t total_bytes_sent = 0;
 
-    while(total_bytes_sent < size){
-        sentBytes = send(sock, &enc_data + total_bytes_sent, size - total_bytes_sent, 0);
-        std::cout << "sent: " << sentBytes <<" bytes of total " << size << "\n";
+    while(total_bytes_sent < data_size){
+        sentBytes = send(sock, &enc_data + total_bytes_sent, data_size - total_bytes_sent, 0);
+        std::cout << "sent: " << sentBytes <<" bytes of total " << data_size << "\n";
         if(sentBytes == -1){
             std::cout << "Error when sending image data " << strerror(errno) << "\n";
             return false;
@@ -87,9 +88,12 @@ bool send_encrypted_image(int sock, const std::vector<enc_pixel_data>& enc_data,
 
 bool send_public_key(int sock, const helib::PubKey& public_key) 
 {
+    std::cout << "Sending Public key to server" << "\n";
     // Create a string stream to hold the serialized public key
     std::ostringstream oss;
     public_key.writeTo(oss); // Serialize the public key into the stream
+
+    //std::cout << "Sending public key to server: " << oss.str() << "\n";
 
     // Retrieve the serialized data as a string
     std::string serializedData = oss.str();
@@ -111,6 +115,7 @@ bool send_public_key(int sock, const helib::PubKey& public_key)
         return false;
     }
 
+    std::cout << "Succesfully sent public key to server" << "\n";
     return true;
 }
 
@@ -118,30 +123,37 @@ bool send_public_key(int sock, const helib::PubKey& public_key)
 helib::PubKey receive_public_key(int sock, const helib::Context& context) 
 {
 
+    std::cout << "Recveiving public key from client" << "\n";
     size_t pb_size;
 
     ssize_t receivedBytes = recv(sock, &pb_size, sizeof(pb_size), 0);
 
-    if (receivedBytes == -1) {
+    if (receivedBytes == -1)
+     {
         std::cout << "Error when receiving public key size " << strerror(errno) << "\n";
 
         //perror("send");
         throw std::runtime_error("");
     }
 
-    std::string data(pb_size, '\0');
+    std::cout << "Recveived public key size: " << receivedBytes << "\n";
+
+    //std::string data(pb_size, '\0');
+    char* data[pb_size];
     size_t bytesReceived = 0;
 
     while (bytesReceived < pb_size) 
     {
-        ssize_t result = recv(sock, &data[bytesReceived], pb_size - bytesReceived, 0);
-        if (result <= 0) 
+        ssize_t result = recv(sock, data + bytesReceived, pb_size - bytesReceived, 0);
+        if (result == -1) 
         {
             std::cout << "Error when receiving public key " << strerror(errno) << "\n";
             throw std::runtime_error("");
         }
         bytesReceived += result;
     }
+
+    std::cout << "Recveived public key data" << "\n";
     
     std::stringstream oss;
     oss << data;
@@ -220,11 +232,13 @@ bool send_cipher_texts(int sock, std::vector<enc_pixel_data> enc_pixels)
 
 std::vector<enc_pixel_data> recv_encrypted_pixels(int sock, const helib::PubKey& public_key)
 {
+    std::cout << "Recveiving Encrypted image" << "\n";
+
     // Receive the number of ciphertexts
     uint32_t num_ciphertexts;
     if (recv(sock, &num_ciphertexts, sizeof(num_ciphertexts), 0) == -1) {
         perror("recv");
-        throw std::runtime_error("Failed to receive number of ciphertexts");
+        throw std::runtime_error("Failed to receive total encrypted image size");
     }
 
     std::vector<helib::Ctxt> ciphertexts;
@@ -236,7 +250,7 @@ std::vector<enc_pixel_data> recv_encrypted_pixels(int sock, const helib::PubKey&
         uint32_t dataSize;
         if (recv(sock, &dataSize, sizeof(dataSize), 0) == -1) {
             perror("recv");
-            throw std::runtime_error("Failed to receive data size");
+            throw std::runtime_error("Failed to receive cipher text data size");
         }
         dataSize = ntohl(dataSize);
 
@@ -247,7 +261,7 @@ std::vector<enc_pixel_data> recv_encrypted_pixels(int sock, const helib::PubKey&
             ssize_t result = recv(sock, &serializedData[bytesReceived], dataSize - bytesReceived, 0);
             if (result <= 0) {
                 perror("recv");
-                throw std::runtime_error("Failed to receive data");
+                throw std::runtime_error("Failed to receive cipher text");
             }
             bytesReceived += result;
         }
@@ -259,9 +273,11 @@ std::vector<enc_pixel_data> recv_encrypted_pixels(int sock, const helib::PubKey&
         ciphertexts.push_back(std::move(ciphertext));
     }
 
+    std::cout << "Recveived encrypted cipher texts from client" << "\n";
+
     std::vector<enc_pixel_data> enc_pixels;
 
-    for(int i = 0; i < ciphertexts.size(); i+=3)
+    for(size_t i = 0; i < ciphertexts.size(); i+=3)
     {
         enc_pixels.push_back(enc_pixel_data(ciphertexts[i], ciphertexts[i+1], ciphertexts[i+2]));
     }
@@ -326,7 +342,7 @@ bool recv_image(int sock, Image& image){
     uint8_t* data = new uint8_t[image_size];
 
 
-    int total_bytes_rec = 0;
+    size_t total_bytes_rec = 0;
     // Receive the actual data
     while (total_bytes_rec < image_size){
         receivedBytes = recv(sock, data + total_bytes_rec, image_size - total_bytes_rec, 0);

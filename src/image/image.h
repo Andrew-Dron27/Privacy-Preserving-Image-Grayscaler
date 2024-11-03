@@ -6,6 +6,9 @@
 struct Image {
 	uint8_t* data = NULL;
 	size_t size = 0;
+	std::vector<long> red_channel;
+	std::vector<long> green_channel;
+	std::vector<long> blue_channel;
 	int width;
 	int height;
 	int channels;
@@ -19,6 +22,8 @@ struct Image {
 
 	bool read_image(const char* file_name);
 	bool write_image(const char* file_name);
+
+	void Image::get_channels(std::vector<long>& red, std::vector<long>& green, std::vector<long>& blue) const;
 	
 	Image& grayscale_avg();
 	Image& grayscale_lum();

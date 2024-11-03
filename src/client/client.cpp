@@ -15,7 +15,7 @@
 #include "../image/image.h"
 #include "../image/network.h"
 #include "../image/image_encryptor.h"
-#include "helib/helib.h"
+#include <helib/helib.h>
 
 #define PORT "3490" // the port client will be connecting to 
 
@@ -33,12 +33,47 @@ void *get_in_addr(struct sockaddr *sa)
 
 void send_img_to_greyscale(int sock, char* file_read_path, char* file_write_path, int scalar_val, int scale_factor)
 {
+    std::cout << "Sending Image to server" << "\n";
     Image image = Image(file_read_path);
 
-    const helib::Context& context = ImageEncryptor::init_helib_context();
+        std::cout << "Initializing helib context" << "\n";
+    // Plaintext prime modulus.
+    long p = 2;
+    // Cyclotomic polynomial - defines phi(m).
+    long m = 4095;
+    // Hensel lifting (default = 1).
+    long r = 1;
+    // Number of bits of the modulus chain.
+    long bits = 500;
+    // Number of columns of Key-Switching matrix (typically 2 or 3).
+    long c = 2;
+    // Factorisation of m required for bootstrapping.
+    std::vector<long> mvec = {7, 5, 9, 13};
+    // Generating set of Zm* group.
+    std::vector<long> gens = {2341, 3277, 911};
+    // Orders of the previous generators.
+    std::vector<long> ords = {6, 4, 6};
 
+    helib::Context context = helib::ContextBuilder<helib::BGV>()
+                            .m(m)
+                            .p(p)
+                            .r(r)
+                            .gens(gens)
+                            .ords(ords)
+                            .bits(bits)
+                            .c(c)
+                            .bootstrappable(true)
+                            .mvec(mvec)
+                            .build();
+
+    //helib::Context context = ImageEncryptor::init_helib_context();
+
+    context.printout();
+
+    std::cout << "Creating secret Key" << "\n";
     // Create a secret key associated with the context.
 	helib::SecKey secret_key(context);
+
 	// Generate the secret key.
 	secret_key.GenSecKey();
 
@@ -57,7 +92,7 @@ void send_img_to_greyscale(int sock, char* file_read_path, char* file_write_path
 	buildUnpackSlotEncoding(unpackSlotEncoding, ea);
 
 	// Get the number of slot (phi(m)).
-	long nslots = ea.size();
+	//long nslots = ea.size();
 
     helib::Ptxt<helib::BGV> scalar(context);
     scalar[0] = scalar_val;
@@ -70,7 +105,13 @@ void send_img_to_greyscale(int sock, char* file_read_path, char* file_write_path
     int w = image.width;
     if(send_public_key(sock, public_key))
     {
-        if(send_encrypted_image(sock, ImageEncryptor::encrypt_image_data(image, context, public_key), public_key))
+        
+        helib::Ctxt ctxt_red(public_key);
+        helib::Ctxt ctxt_green(public_key);
+        helib::Ctxt ctxt_blue(public_key);
+        ImageEncryptor::encrypt_image(image, public_key, context, ctxt_red, ctxt_green, ctxt_blue);
+
+        if(send_encrypted_image(sock, ))
         {
             std::vector<enc_pixel_data> enc_data = recv_encrypted_pixels(sock, public_key);
             std::cout << "Decrypting image data" << "\n";

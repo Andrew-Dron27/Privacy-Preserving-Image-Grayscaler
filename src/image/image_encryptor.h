@@ -7,7 +7,7 @@
 #include "image.h"
 
 struct enc_pixel_data{
-    enc_pixel_data(helib::Ctxt _red, helib::Ctxt _green, helib::Ctxt _blue) : red(_red), blue(_blue), green(_green){}
+    enc_pixel_data(helib::Ctxt _red, helib::Ctxt _green, helib::Ctxt _blue) : red(_red), green(_green), blue(_blue){}
     helib::Ctxt red;
     helib::Ctxt green;
     helib::Ctxt blue;
@@ -21,17 +21,75 @@ public:
         helib::PubKey public_key)
     {
         //const helib::EncryptedArray& ea = context.getEA();
+        std::cout << "Encrypting image data" << "\n";
         std::vector<enc_pixel_data> encrypted_data;
-        int red,blue,green;
-        for(int i = 0; i < img.size; i+=img.channels)
+        helib::Ptxt<helib::BGV> red(context);
+        helib::Ptxt<helib::BGV> green(context);
+        helib::Ptxt<helib::BGV> blue(context);
+        std::cout << "Image size" << img.size << "\n";
+        for(size_t i = 0; i < img.size; i+=img.channels)
         {
-            red = img.data[i];
-            green = img.data[i+1];
-            blue = img.data[i+2];
-            encrypted_data.push_back(ImageEncryptor::encrypt_pixel(red, blue, green, context, public_key));
+            std::cout << "Encrypting: " << i << "\n";
+            red[0] = img.data[i];
+            green[0] = img.data[i+1];
+            blue[0] = img.data[i+2];
+            encrypted_data.push_back(ImageEncryptor::encrypt_pixel(red, green, blue, public_key));
         }
 
         return encrypted_data;
+    }
+
+    // Assumes image data is in three vectors: redChannel, greenChannel, blueChannel
+    static void encrypt_image(const Image& img, const helib::PubKey& publicKey, const helib::Context& context,
+                    helib::Ctxt& ctxt_red, helib::Ctxt& ctxt_green, helib::Ctxt& ctxt_blue) {
+        std::vector<long> red_channel;
+        std::vector<long> blue_channel; 
+        std::vector<long> green_channel;
+
+        img.get_channels(red_channel, blue_channel, green_channel);
+
+        
+        // Encode the plaintext RGB channels using the context
+        helib::Ptxt<helib::BGV> ptxt_red(context, red_channel);
+        helib::Ptxt<helib::BGV> ptxt_green(context, green_channel);
+        helib::Ptxt<helib::BGV> ptxt_blue(context, blue_channel);
+
+        // Encrypt each color channel separately
+        publicKey.Encrypt(ctxt_red, ptxt_red);
+        publicKey.Encrypt(ctxt_green, ptxt_green);
+        publicKey.Encrypt(ctxt_blue, ptxt_blue);
+
+        std::cout << "Image RGB data encrypted successfully." << std::endl;
+    }
+
+    void decryptImage(const helib::SecKey& secretKey, const helib::Context& context,
+                  const helib::Ctxt& ctxt_red, const helib::Ctxt& ctxt_green, 
+                  const helib::Ctxt& ctxt_blue,
+                  std::vector<long>& redChannel, std::vector<long>& greenChannel, 
+                  std::vector<long>& blueChannel) {
+
+        // Decrypt each color channel ciphertext into plaintexts
+        helib::Ptxt<helib::BGV> ptxt_red(context);
+        helib::Ptxt<helib::BGV> ptxt_green(context);
+        helib::Ptxt<helib::BGV> ptxt_blue(context);
+
+        secretKey.Decrypt(ptxt_red, ctxt_red);
+        secretKey.Decrypt(ptxt_green, ctxt_green);
+        secretKey.Decrypt(ptxt_blue, ctxt_blue);
+
+        // Extract the decrypted data from each plaintext and store in vectors
+    for (size_t i = 0; i < ptxt_red.size(); i++) 
+    {
+        redChannel.push_back(ptxt_red[i].rep[0]);  // Directly store as `long`
+    }
+    for (const auto& val : ptxt_green) {
+        greenChannel.push_back(val);  // Directly store as `long`
+    }
+    for (const auto& val : ptxt_blue) {
+        blueChannel.push_back(val);  // Directly store as `long`
+    }
+
+        std::cout << "Image RGB data decrypted successfully." << std::endl;
     }
 
     static Image decrypt_image_data(std::vector<enc_pixel_data> encrypted_image, const helib::Context& context,
@@ -43,7 +101,7 @@ public:
         helib::Ptxt<helib::BGV> decryptedGreen(context);
         helib::Ptxt<helib::BGV> decryptedBlue(context);
 
-        for(int i = 0; i < encrypted_image.size(); i++)
+        for(size_t i = 0; i < encrypted_image.size(); i++)
         {
             secret_key.Decrypt(decryptedRed, encrypted_image[i].red);
             secret_key.Decrypt(decryptedGreen, encrypted_image[i].green);
@@ -62,7 +120,7 @@ public:
     {
         helib::Ctxt grey_pixel(public_key);
 
-        for(int i = 0; i < enc_data.size(); i++)
+        for(size_t i = 0; i < enc_data.size(); i++)
         {
             grey_pixel += enc_data[i].red;
             grey_pixel += enc_data[i].blue;
@@ -73,15 +131,15 @@ public:
         return enc_data;
     }
 
-    static enc_pixel_data encrypt_pixel(int red, int green, int blue, const helib::Context& context,
-         helib::PubKey public_key)
+    static enc_pixel_data encrypt_pixel(helib::Ptxt<helib::BGV> red, helib::Ptxt<helib::BGV> green,
+        helib::Ptxt<helib::BGV> blue, helib::PubKey public_key)
     {
         helib::Ctxt r(public_key);
         helib::Ctxt g(public_key);
         helib::Ctxt b(public_key);
-        public_key.Encrypt(r, ImageEncryptor::int_to_bits(red));
-        public_key.Encrypt(g, ImageEncryptor::int_to_bits(green));
-        public_key.Encrypt(b, ImageEncryptor::int_to_bits(blue));
+        public_key.Encrypt(r, red);
+        public_key.Encrypt(g, green);
+        public_key.Encrypt(b, blue);
 
         return enc_pixel_data(r, g, b);
     }
@@ -92,7 +150,7 @@ public:
         int message = 0;
 
         // Iterate over the vector, assuming bits are in reverse order (LSB to MSB)
-        for (int i = 0; i < bits.size(); ++i) {
+        for (size_t i = 0; i < bits.size(); ++i) {
             if (bits[i] == 1) {
                 message |= (1 << i);
             }
@@ -104,7 +162,7 @@ public:
     static helib::Ptxt<helib::BGV> int_to_bits(int num)
     {
         helib::Ptxt<helib::BGV> bits;
-        for (int i = 0; i < sizeof(int) * 8; ++i) {
+        for (size_t i = 0; i < sizeof(int) * 8; ++i) {
             bits[i] = (num >> i) & 1;
         }
         return bits;
@@ -112,6 +170,7 @@ public:
 
     static const helib::Context& init_helib_context()
     {
+        std::cout << "Initializing helib context" << "\n";
         // Plaintext prime modulus.
         long p = 2;
         // Cyclotomic polynomial - defines phi(m).
@@ -140,7 +199,7 @@ public:
                                 .bootstrappable(true)
                                 .mvec(mvec)
                                 .build();
-
+        //context.printout(); 
         return context;
     }
 };

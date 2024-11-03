@@ -1,5 +1,5 @@
 CXX = g++
-CXXFLAGS = -Wall -Wextra -std=c++17 -g -lhelib
+CXXFLAGS = -Wall -Wextra -std=c++17 -g
 
 SRCDIR = src
 OBJDIR = obj
@@ -12,7 +12,7 @@ CLIENT_OBJ_DIR := ./obj/client
 IMAGE_SRC_DIR := ./src/image
 ENCRYPTION_SRC_DIR := ./src/encryption
 BIN_DIR     := ./bin
-LIBS = -lntl -lgmp -lm
+LIBS = -lhelib -lntl -lgmp -lm 
 HELIB_INC := /usr/local/include/helib
 HELIB_LIB := /usr/local/lib/libhelib.a
 
@@ -41,11 +41,11 @@ all: $(SERVER_TARGET) $(CLIENT_TARGET)
 # Link object files to create the executable
 $(SERVER_TARGET): $(SERVER_OBJECTS)
 	@mkdir -p $(BINDIR)
-	$(CXX) $(SERVER_OBJECTS) $(HELIB_LIB) -lhelib -o  $(SERVER_TARGET) $(LIBS)
+	$(CXX) $(SERVER_OBJECTS) -o  $(SERVER_TARGET) -L$(HELIB_LIB) $(LIBS) -I$(HELIB_INC)
 
 $(CLIENT_TARGET): $(CLIENT_OBJECTS)
 	@mkdir -p $(BINDIR)
-	$(CXX) $(CLIENT_OBJECTS) $(HELIB_LIB) -lhelib -o $(CLIENT_TARGET) $(LIBS)
+	$(CXX) $(CLIENT_OBJECTS) -o $(CLIENT_TARGET) -L$(HELIB_LIB) $(LIBS) -I$(HELIB_INC)
 
 # Compile library object files
 $(OBJDIR)/image/%.o: $(IMAGE_SRC_DIR)/%.cpp
